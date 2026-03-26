@@ -1,0 +1,59 @@
+#!/usr/bin/env bash
+# SessionStart hook for hsk-superpowers plugin
+
+set -euo pipefail
+
+# Determine plugin root directory
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+PLUGIN_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+
+# Check if legacy skills directory exists and build warning
+warning_message=""
+legacy_skills_dir="${HOME}/.config/superpowers/skills"
+if [ -d "$legacy_skills_dir" ]; then
+    warning_message="\n\n<important-reminder>IN YOUR FIRST REPLY AFTER SEEING THIS MESSAGE YOU MUST TELL THE USER:⚠️ **WARNING:** HSK-Superpowers now uses Claude Code's skills system. Custom skills in ~/.config/superpowers/skills will not be read. Move custom skills to ~/.claude/skills instead. To make this message go away, remove ~/.config/superpowers/skills</important-reminder>"
+fi
+
+# Read using-superpowers content
+using_superpowers_content=$(cat "${PLUGIN_ROOT}/skills/using-superpowers/SKILL.md" 2>&1 || echo "Error reading using-superpowers skill")
+
+# Escape string for JSON embedding using bash parameter substitution.
+# Each ${s//old/new} is a single C-level pass - orders of magnitude
+# faster than the character-by-character loop this replaces.
+escape_for_json() {
+    local s="$1"
+    s="${s//\\/\\\\}"
+    s="${s//\"/\\\"}"
+    s="${s//$'\n'/\\n}"
+    s="${s//$'\r'/\\r}"
+    s="${s//$'\t'/\\t}"
+    printf '%s' "$s"
+}
+
+using_superpowers_escaped=$(escape_for_json "$using_superpowers_content")
+warning_escaped=$(escape_for_json "$warning_message")
+hashkey_context="\\n\\n## HashKey Chain L2 Development Context\\n\\nThis project targets HashKey Chain L2 (OP Stack).\\n- **Mainnet:** Chain ID 177, RPC: https://mainnet.hsk.xyz, WSS: wss://mainnet.hsk.xyz/ws\\n- **Testnet:** Chain ID 133, RPC: https://testnet.hsk.xyz, WSS: wss://testnet-ws.hsk.xyz\\n- **Gas Token:** HSK (not ETH)\\n- **Toolchain:** Foundry (forge/cast/anvil), OpenZeppelin latest stable\\n- **Frontend:** Next.js + React, wagmi + viem, Tailwind + shadcn/ui, TanStack Query\\n- **Backend:** Go (go-ethereum, abigen), Docker + K8s\\n- **i18n:** next-intl (zh/en)\\n- **Multi-sig:** Safe (Gnosis Safe), **Proxy:** UUPS\\n- **Audit:** Internal + SlowMist, **Compliance:** KYC/AML/ERC-3643\\n- **NatSpec:** Strict mode (@dev @param @return on all public/external)\\n- **Commits:** Conventional Commits (feat/fix/chore/docs)\\n- **Comments:** Chinese preferred for code comments\\n- **Indexing:** The Graph (team-owned node) + custom indexers\\n- **Repos:** Separate (contracts / frontend / backend)\\n- Say 'onchain' not 'on-chain' (Ethereum community convention)\\n\\n**Blockchain skills (auto-triggered by context):**\\n- hsk-superpowers:smart-contract-security — Before writing any Solidity\\n- hsk-superpowers:onchain-testing — Foundry test patterns (Unit/Fuzz/Fork/Invariant)\\n- hsk-superpowers:l2-deployment — Anvil -> Testnet -> Mainnet deployment\\n- hsk-superpowers:contract-upgrade — UUPS proxy upgrades with Timelock\\n- hsk-superpowers:compliance-check — KYC/AML/ERC-3643 requirements\\n- hsk-superpowers:gas-optimization — Gas analysis and optimization\\n- hsk-superpowers:event-design — Indexer-friendly event design\\n- hsk-superpowers:cross-chain — OP Standard Bridge, L1<->L2 messaging\\n- hsk-superpowers:erc3643-security-token — Security Token implementation\\n- hsk-superpowers:incident-response — Emergency response procedures\\n\\n**Fullstack skills (auto-triggered by context):**\\n- hsk-superpowers:dapp-frontend — dApp frontend (Next.js + wagmi + viem)\\n- hsk-superpowers:go-backend — Go backend blockchain service\\n- hsk-superpowers:abi-sync — ABI synchronization pipeline (contract -> frontend/backend)\\n- hsk-superpowers:data-indexing — The Graph, custom indexers, Multicall3\\n- hsk-superpowers:fullstack-testing — Frontend/Go/E2E testing\\n- hsk-superpowers:fullstack-deploy — Docker + K8s + GitHub Actions CI/CD\\n- hsk-superpowers:rpc-optimization — Multicall3, caching, WebSocket\\n- hsk-superpowers:project-scaffold — New project initialization\\n"
+
+session_context="<EXTREMELY_IMPORTANT>\nYou have superpowers.\n\n**Below is the full content of your 'hsk-superpowers:using-superpowers' skill - your introduction to using skills. For all other skills, use the 'Skill' tool:**\n\n${using_superpowers_escaped}\n\n${warning_escaped}\n${hashkey_context}\n</EXTREMELY_IMPORTANT>"
+
+# Output context injection as JSON.
+# Cursor hooks expect additional_context.
+# Claude Code hooks expect hookSpecificOutput.additionalContext.
+# Claude Code reads BOTH fields without deduplication, so we must only
+# emit the field consumed by the current platform to avoid double injection.
+#
+# Uses printf instead of heredoc (cat <<EOF) to work around a bash 5.3+
+# bug where heredoc variable expansion hangs when content exceeds ~512 bytes.
+# See: https://github.com/obra/superpowers/issues/571
+if [ -n "${CURSOR_PLUGIN_ROOT:-}" ]; then
+  # Cursor sets CURSOR_PLUGIN_ROOT (may also set CLAUDE_PLUGIN_ROOT) — emit additional_context
+  printf '{\n  "additional_context": "%s"\n}\n' "$session_context"
+elif [ -n "${CLAUDE_PLUGIN_ROOT:-}" ]; then
+  # Claude Code sets CLAUDE_PLUGIN_ROOT — emit only hookSpecificOutput
+  printf '{\n  "hookSpecificOutput": {\n    "hookEventName": "SessionStart",\n    "additionalContext": "%s"\n  }\n}\n' "$session_context"
+else
+  # Other platforms — emit additional_context as fallback
+  printf '{\n  "additional_context": "%s"\n}\n' "$session_context"
+fi
+
+exit 0

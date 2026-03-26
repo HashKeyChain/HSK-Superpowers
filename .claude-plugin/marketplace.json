@@ -1,0 +1,18 @@
+{
+  "name": "hsk-superpowers-dev",
+  "description": "Development marketplace for HSK-Superpowers",
+  "owner": {
+    "name": "HashKey Chain"
+  },
+  "plugins": [
+    {
+      "name": "hsk-superpowers",
+      "description": "HashKey Chain L2 full-stack development workflow: 32 AI skills for security, compliance, Foundry TDD, frontend, backend, and deployment",
+      "version": "1.0.0",
+      "source": "./",
+      "author": {
+        "name": "HashKey Chain"
+      }
+    }
+  ]
+}

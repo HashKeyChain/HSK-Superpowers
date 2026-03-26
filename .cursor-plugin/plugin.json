@@ -1,0 +1,17 @@
+{
+  "name": "hsk-superpowers",
+  "displayName": "HSK-Superpowers",
+  "description": "HashKey Chain L2 full-stack development workflow: 32 AI skills for security, compliance, Foundry TDD, frontend, backend, and deployment",
+  "version": "1.0.0",
+  "author": {
+    "name": "HashKey Chain"
+  },
+  "homepage": "https://github.com/HashKeyChain/HSK-Superpowers",
+  "repository": "https://github.com/HashKeyChain/HSK-Superpowers",
+  "license": "MIT",
+  "keywords": ["solidity", "foundry", "l2", "security", "hashkey-chain", "smart-contracts"],
+  "skills": "./skills/",
+  "agents": "./agents/",
+  "commands": "./commands/",
+  "hooks": "./hooks/hooks-cursor.json"
+}
