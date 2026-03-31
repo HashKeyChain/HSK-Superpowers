@@ -17,9 +17,17 @@ Do NOT invoke any implementation skill, write any code, scaffold any project, or
 Do NOT output Spec Kit stage prompts (constitution/specify/plan), generate long paste-prompts, write to docs/superpowers/specs/ or docs/superpowers/plans/, or invoke writing-plans until the user has explicitly approved the design AND indicated readiness to proceed. Before that point, no Spec Kit content and no implementation artifacts.
 </HARD-GATE>
 
+<HARD-GATE>
+AFTER design approval: Do NOT write implementation code, scaffold projects, run init commands (git init, forge init, npm init, go mod init, etc.), create files, invoke implementation skills, or take ANY implementation action until the Spec Kit guided workflow has been completed or the user has explicitly said to skip it. Design approval unlocks Spec Kit guided mode — NOT implementation. The ONLY action allowed after design approval is entering Spec Kit guided mode (or the alternative path if explicitly requested). This gate cannot be skipped, cancelled, or rationalized away.
+</HARD-GATE>
+
 ## Anti-Pattern: "This Is Too Simple To Need A Design"
 
 Every project goes through this process. A todo list, a single-function utility, a config change — all of them. "Simple" projects are where unexamined assumptions cause the most wasted work. The design can be short (a few sentences for truly simple projects), but you MUST present it and get approval.
+
+## Anti-Pattern: "The User Approved The Design, So I Can Start Coding"
+
+NO. Design approval unlocks **Spec Kit guided mode**, not implementation. You MUST walk the user through the Spec Kit stages (Init → Constitution → Specify → Plan → Tasks → Implement) before any code is written. The user runs `/speckit.*` commands; you provide prompts. Do NOT skip this, cancel this todo, or jump to writing code. The only exception is if the user explicitly says to skip Spec Kit.
 
 ## Checklist
 
@@ -31,11 +39,13 @@ You MUST create a task for each of these items and complete them in order:
 4. **Propose 2-3 approaches** — with trade-offs and your recommendation
 5. **Present design** — in sections scaled to their complexity, get user approval after each section
 6. **User explicitly approves design** — confirm what/why, boundaries, non-goals, risks are settled. Do NOT proceed until you have clear approval.
-7. **Transition to Spec Kit guided mode** (default) — read `skills/brainstorming/speckit-guide.md` and follow its stage-by-stage instructions. One stage at a time; wait for user confirmation after each.
+7. **MANDATORY: Enter Spec Kit guided mode** (default) — read `skills/brainstorming/speckit-guide.md` and follow its stage-by-stage instructions. One stage at a time; wait for user confirmation after each. Do NOT cancel this task. Do NOT skip to implementation. Do NOT write any code until this is complete.
 
 <ALTERNATIVE-PATH>
-Step 7 above is the DEFAULT. The following alternative applies ONLY when:
-(a) User explicitly requests Superpowers-style plan files or points to writing-plans
+Step 7 above is the ONLY default. Do NOT offer the user a choice between Spec Kit and Superpowers-style plans. Do NOT ask "which path do you prefer?" Always enter Spec Kit guided mode unless the user has ALREADY explicitly said (unprompted by you) that they want Superpowers-style plan files or writing-plans.
+
+The following alternative replaces step 7 ONLY when the user has already explicitly requested it:
+(a) User explicitly requests Superpowers-style plan files or points to writing-plans by name
 (b) This is plugin/meta-level design work for this toolchain itself (specs go to docs/superpowers/specs/)
 
 Alternative step 7: **Write design doc** to `docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md`, commit, run spec review loop (see spec-document-reviewer-prompt.md, max 3 iterations), user reviews spec, then invoke writing-plans skill.
@@ -52,9 +62,7 @@ digraph brainstorming {
     "Propose 2-3 approaches" [shape=box];
     "Present design sections" [shape=box];
     "User approves design?" [shape=diamond];
-    "Enter Spec Kit guided mode" [shape=doublecircle];
-    "User explicitly requests\nSuperpowers-style plans?" [shape=diamond];
-    "Write design doc + spec review\n+ invoke writing-plans" [shape=box style=dashed];
+    "Enter Spec Kit guided mode\n(MANDATORY — no other default)" [shape=doublecircle];
 
     "Explore project context" -> "Visual questions ahead?";
     "Visual questions ahead?" -> "Offer Visual Companion\n(own message, no other content)" [label="yes"];
@@ -64,13 +72,11 @@ digraph brainstorming {
     "Propose 2-3 approaches" -> "Present design sections";
     "Present design sections" -> "User approves design?";
     "User approves design?" -> "Present design sections" [label="no, revise"];
-    "User approves design?" -> "User explicitly requests\nSuperpowers-style plans?" [label="yes"];
-    "User explicitly requests\nSuperpowers-style plans?" -> "Write design doc + spec review\n+ invoke writing-plans" [label="yes (opt-in\nor meta work)"];
-    "User explicitly requests\nSuperpowers-style plans?" -> "Enter Spec Kit guided mode" [label="no (default)"];
+    "User approves design?" -> "Enter Spec Kit guided mode\n(MANDATORY — no other default)" [label="yes"];
 }
 ```
 
-**The default terminal state is entering Spec Kit guided mode** (see `skills/brainstorming/speckit-guide.md`). Do NOT invoke dapp-frontend, go-backend, smart-contract-security, or any other implementation skill directly from brainstorming. Do NOT automatically invoke writing-plans — it is only used when the user explicitly requests Superpowers-style plan files or for plugin/meta work on this toolchain itself.
+**The terminal state is ALWAYS entering Spec Kit guided mode** (see `skills/brainstorming/speckit-guide.md`). There is no decision node after design approval — you go straight to Spec Kit. Do NOT ask the user which path they want. Do NOT offer a choice. Do NOT invoke writing-plans, dapp-frontend, go-backend, smart-contract-security, or any other skill. The ONLY next action is reading speckit-guide.md and starting Stage 0 (Init).
 
 ## The Process
 
@@ -113,20 +119,24 @@ digraph brainstorming {
 
 ## After the Design
 
-**Default path — Spec Kit guided mode:**
+**Default path — Spec Kit guided mode (MANDATORY):**
 
-Once the user approves the design, read and follow `skills/brainstorming/speckit-guide.md`. This guide walks through Spec Kit stages one at a time (Init → Constitution → Specify → Plan → Tasks → Implement). You output operation instructions and copyable prompts; the **user** executes `/speckit.*` slash commands in their IDE. You do NOT run `specify` commands, write `.specify/**` files, or generate Spec Kit artifacts yourself.
+Once the user approves the design, you MUST read and follow `skills/brainstorming/speckit-guide.md`. This is NOT optional. This guide walks through Spec Kit stages one at a time (Init → Constitution → Specify → Plan → Tasks → Implement). You output operation instructions and copyable prompts; the **user** executes `/speckit.*` slash commands in their IDE. You do NOT run `specify` commands, write `.specify/**` files, or generate Spec Kit artifacts yourself.
+
+**You are FORBIDDEN from writing implementation code, scaffolding projects, running init commands, or taking any implementation action until the user has completed the Spec Kit workflow or explicitly told you to skip it.**
 
 > After the user approves, say: "Design confirmed. We'll now proceed through Spec Kit stage by stage. Let me know when you're ready and I'll give you the first step."
 
-Wait for the user's confirmation before outputting the first Spec Kit stage prompt.
+Wait for the user's confirmation before outputting the first Spec Kit stage prompt. Start with Stage 0 (Init) from speckit-guide.md — check whether the target repo has a `.specify/` directory.
 
 <ALTERNATIVE-PATH>
-The following alternative applies ONLY when:
-(a) User explicitly requests Superpowers-style plan files or points to writing-plans
+Do NOT use this alternative unless the user has ALREADY explicitly and unprompted requested Superpowers-style plan files or writing-plans by name. Do NOT offer this as an option. Do NOT ask the user to choose.
+
+Applies ONLY when:
+(a) User has already explicitly requested Superpowers-style plan files or writing-plans by name (unprompted by you)
 (b) This is plugin/meta-level design work for this toolchain itself
 
-If alternative path:
+If — and only if — one of the above conditions was met before reaching this point:
 1. Write the validated design (spec) to `docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md`
    - (User preferences for spec location override this default)
    - Use elements-of-style:writing-clearly-and-concisely skill if available

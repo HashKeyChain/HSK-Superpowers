@@ -5,42 +5,63 @@ Stage-by-stage guide for transitioning a brainstorming-approved design into Spec
 ## Ground Rules
 
 - **Do NOT** run `specify` CLI commands, write `.specify/**` files, or generate Spec Kit artifacts on disk.
-- **Do NOT** output multiple stage prompts at once. One stage at a time; wait for the user to execute the slash command, confirm the output, then proceed to the next stage.
+- **Do NOT** output multiple stage prompts at once. One stage at a time; wait for the user to confirm completion, then verify artifacts with file tools, then proceed to the next stage.
 - **Do NOT** output long paste-prompts for the Tasks stage — only a short instruction.
 - **Do NOT** write business specs to `docs/superpowers/specs/*-design.md` (that path is reserved for plugin/meta work or when the user explicitly requests Superpowers-style files).
 - The **sole source of truth** for the business spec is the Spec Kit artifacts in the target repository.
 
+## User Feedback Loop
+
+The user executes `/speckit.*` commands in their IDE (possibly in a different chat context). You have no way to observe this directly. For every stage:
+
+1. **Output** the stage instructions and copyable prompt
+2. **Explicitly tell** the user to come back and confirm when done (e.g. "Let me know when you've finished this step")
+3. **Wait** for the user to confirm
+4. **Verify** with your file tools (Glob, Read, ls) that the expected artifacts exist in `.specify/`
+5. **If artifacts found** → announce verification passed, output the next stage
+6. **If artifacts NOT found** → tell the user what's missing, ask them to retry or check for errors
+
+Do NOT proceed to the next stage without both user confirmation AND artifact verification (except Implement — no verification needed).
+
 ---
 
-## Stage 0: Init (if needed)
+## Stage 0: Init
 
-**When:** The target repository has not been initialized with Spec Kit yet (no `.specify/` directory).
+**First action:** Use your file tools (Glob, Read, or ls) to check whether `.specify/` exists in the target repository. Do NOT skip this check. Do NOT assume it exists or doesn't exist — verify with tools.
 
-**What to say:**
+**If `.specify/` does NOT exist**, say:
 
-> Check whether the target repo already has a `.specify/` directory. If not, please initialize first:
+> Your repo doesn't have a `.specify/` directory yet — Spec Kit needs to be initialized. Please run:
 >
 > ```
-> specify init . --ai <your-agent>
+> specify init .
 > ```
 >
-> Let me know once initialization is complete and we'll move to the next step.
+> The CLI will prompt you to select your AI agent. Let me know once initialization is complete.
 
-**Do NOT** run `specify init` yourself. Wait for the user to confirm before proceeding.
+**Then wait** for the user to confirm. Once they confirm, **verify again** with file tools that `.specify/` now exists.
+- If `.specify/` exists → announce success, proceed to Stage 1
+- If `.specify/` still doesn't exist → tell the user init may have failed, ask them to check and retry
+
+**If `.specify/` already exists** on the initial check, say:
+
+> Your repo already has Spec Kit initialized (`.specify/` exists). Moving to the Constitution stage.
+
+Then proceed directly to Stage 1.
+
+**Do NOT** run `specify init` yourself.
 
 ---
 
 ## Stage 1: Constitution
 
-**When:** After Init is confirmed (or was already done).
-
-**Check first:** Does the repository already have a constitution in `.specify/constitution.md` (or equivalent)? Ask the user or check if they mention it.
+**First action:** Use your file tools to check whether a constitution file exists in `.specify/` (e.g. `.specify/constitution.md` or similar). Do NOT just ask the user — verify with tools first, then tell the user what you found.
 
 ### If constitution already exists — supplement only (default)
 
-Output a copyable prompt that **adds organization/chain/stack-relevant paragraphs** without replacing the full document. Frame it as:
+Output a copyable prompt that **adds organization/chain/stack-relevant paragraphs** without replacing the full document:
 
-> Your repo already has a constitution. Next, run `/speckit.constitution` and paste the following as supplementary input:
+> Your repo already has a constitution at `[path you found]`. Next, run `/speckit.constitution` and paste the following as supplementary input:
 >
 > ```
 > Please supplement the existing constitution with the following organization and tech stack paragraphs (do not replace existing content):
@@ -63,7 +84,7 @@ Output a copyable prompt that **adds organization/chain/stack-relevant paragraph
 > - [Customize per project: L2 characteristics, cross-chain bridge, HSK gas economics, etc.]
 > ```
 >
-> Confirm the output once done, and we'll move to the Specify stage.
+> Let me know when you've finished this step.
 
 ### If no constitution exists — full prompt
 
@@ -95,19 +116,23 @@ Output a copyable prompt that **adds organization/chain/stack-relevant paragraph
 > ## [Other project-specific principles]
 > ```
 >
-> Confirm the output once done, and we'll move to the Specify stage.
+> Let me know when you've finished this step.
 
 ### Full replacement — only when user explicitly asks
 
 If the user says they want to replace the existing constitution entirely, then output the full prompt above instead of the supplement. Do NOT default to full replacement.
 
+### Verification after user confirms
+
+Once the user says they've finished, use file tools to confirm the constitution file exists in `.specify/`. User confirmation + file exists = verification passed → proceed to Stage 2. If file not found → ask the user to check.
+
 ---
 
 ## Stage 2: Specify
 
-**When:** Constitution is confirmed.
+**When:** Constitution is confirmed and verified.
 
-Output a complete specify prompt that embeds the consensus reached during brainstorming. Structure:
+Output a complete specify prompt that embeds the consensus reached during brainstorming:
 
 > Run `/speckit.specify` and paste the following as input:
 >
@@ -130,16 +155,20 @@ Output a complete specify prompt that embeds the consensus reached during brains
 > ## Design Consensus
 > [Architecture/approach choices confirmed during brainstorming, with rationale]
 > ```
+>
+> Let me know when you've finished this step.
 
 **Important:** Fill in the template above with actual content from the brainstorming conversation — do not leave placeholders. The prompt should be a complete, self-contained specification input.
 
-> Confirm the output once done, and we'll move to the Plan stage.
+### Verification after user confirms
+
+Once the user confirms, use file tools to check for new spec-related files in `.specify/` (e.g. Glob `.specify/**` and look for spec artifacts that weren't there before). If verified → proceed to Stage 3. If not found → ask the user to check.
 
 ---
 
 ## Stage 3: Plan
 
-**When:** Specify artifacts are confirmed.
+**When:** Specify artifacts are confirmed and verified.
 
 Output a complete plan prompt with technology stack and layering consistent with the brainstorming consensus:
 
@@ -156,26 +185,34 @@ Output a complete plan prompt with technology stack and layering consistent with
 >
 > Each task should be small enough to complete one step in 2-5 minutes.
 > ```
+>
+> Let me know when you've finished this step.
 
 **Important:** Fill in with actual brainstorming consensus, not placeholders.
 
-> Confirm the output once done, and we'll move to the Tasks stage.
+### Verification after user confirms
+
+Once the user confirms, use file tools to check for new plan-related files in `.specify/`. If verified → proceed to Stage 4. If not found → ask the user to check.
 
 ---
 
 ## Stage 4: Tasks
 
-**When:** Plan artifacts are confirmed.
+**When:** Plan artifacts are confirmed and verified.
 
 **Short guidance only — do NOT output a long prompt:**
 
-> Run `/speckit.tasks` in the current context — it will automatically break down tasks based on the existing plan. Let me know the result when done.
+> Run `/speckit.tasks` — it will automatically break down tasks based on the existing plan. Let me know when it's done.
+
+### Verification after user confirms
+
+Once the user confirms, use file tools to check for new task-related files in `.specify/`. If verified → proceed to Stage 5. If not found → ask the user to check.
 
 ---
 
 ## Stage 5: Implement
 
-**When:** Tasks are confirmed.
+**When:** Tasks are confirmed and verified.
 
 Remind the user about pacing — this is critical:
 
@@ -187,7 +224,7 @@ Remind the user about pacing — this is critical:
 >
 > `/speckit.implement` writes code directly — this is the normal implementation flow.
 
-**This is the end of the default Spec Kit flow.** The user continues with `/speckit.implement` at their own pace.
+**This is the end of the default Spec Kit flow.** No artifact verification needed for Implement — the user continues at their own pace.
 
 ---
 
