@@ -102,6 +102,10 @@ When multiple skills could apply, use this order:
 "Let's build X" → brainstorming first, then implementation skills.
 "Fix this bug" → debugging first, then domain-specific skills.
 
+## Spec Kit Integration
+
+When brainstorming concludes with an approved design, the **default next step** is **Spec Kit guided mode** — the brainstorming skill handles this transition by reading its `speckit-guide.md`. Do NOT automatically invoke writing-plans after brainstorming unless the user explicitly requests Superpowers-style plan files or this is plugin/meta work. Do NOT write business specs to `docs/superpowers/specs/*-design.md` by default — business spec truth source is Spec Kit artifacts in the target repository.
+
 ## Skill Types
 
 **Rigid** (TDD, debugging): Follow exactly. Don't adapt away discipline.

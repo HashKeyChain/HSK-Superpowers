@@ -1,7 +1,14 @@
 ---
 name: writing-plans
-description: Use when you have a spec or requirements for a multi-step task, before touching code
+description: Use when the user explicitly requests Superpowers-style plan files, or for plugin/meta design work. NOT the default post-brainstorm step — default is Spec Kit guided mode.
 ---
+
+<NOT-DEFAULT-PATH>
+This skill is NOT the default next step after brainstorming. The default post-brainstorm flow is Spec Kit guided mode (see brainstorming skill's speckit-guide.md). Use this skill ONLY when:
+(a) User explicitly requests Superpowers-style plan files or points to this skill by name
+(b) Plugin/meta design work: after writing a meta-spec to docs/superpowers/specs/, need a plans/*.md for the meta requirement
+Do NOT auto-invoke this skill after brainstorming unless the user has explicitly opted in.
+</NOT-DEFAULT-PATH>
 
 # Writing Plans
 

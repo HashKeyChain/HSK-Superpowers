@@ -26,10 +26,18 @@ claude plugin add https://github.com/HashKeyChain/HSK-Superpowers
 
 安装后无需任何配置。32 个 Skills 会**根据你的请求自动触发**，以 Cursor 为例：
 
-**开始新项目：** 输入 "帮我创建一个 HSK Chain 上的 Staking 合约项目"
+**开始新项目（默认 Spec Kit 流程）：** 输入 "帮我创建一个 HSK Chain 上的 Staking 合约项目"
 
 ```
-brainstorming → 追问安全/合规/架构 → writing-plans → 生成计划
+brainstorming → 追问安全/合规/架构 → 用户确认设计
+→ Spec Kit 引导模式（AI 输出操作说明 + 可复制 prompt，用户执行 /speckit.* 命令）
+→ Constitution → Specify → Plan → Tasks → Implement（每次 1-2 phase）
+```
+
+**替代流程（用户明确要求 Superpowers 风格计划文件时）：**
+
+```
+brainstorming → writing-plans → 生成计划
 → subagent-driven-dev → 逐任务实现+审查 → verification → 验证
 → finishing-branch → Security Gate + PR
 ```
@@ -54,6 +62,19 @@ Gas Token: HSK（非 ETH）
 ```
 
 ## 开发流程
+
+**默认流程（Spec Kit 集成）：**
+
+```
+1. brainstorming            → 需求澄清、安全/合规/前后端架构设计
+2. Spec Kit 引导模式         → AI 输出操作说明，用户执行 /speckit.* 命令
+   - Constitution → Specify → Plan → Tasks → Implement（每次 1-2 phase）
+3. test-driven-development  → Foundry TDD（Unit/Fuzz/Fork/Invariant）
+4. verification             → forge build + test + slither + snapshot
+5. finishing-branch         → Security Gate + Audit Gate + PR/Merge
+```
+
+**替代流程（用户明确要求 Superpowers 风格计划文件时）：**
 
 ```
 1. brainstorming          → 需求澄清、安全/合规/前后端架构设计

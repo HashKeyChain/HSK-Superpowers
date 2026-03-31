@@ -13,6 +13,10 @@ Start by understanding the current project context, then ask questions one at a 
 Do NOT invoke any implementation skill, write any code, scaffold any project, or take any implementation action until you have presented a design and the user has approved it. This applies to EVERY project regardless of perceived simplicity.
 </HARD-GATE>
 
+<HARD-GATE>
+Do NOT output Spec Kit stage prompts (constitution/specify/plan), generate long paste-prompts, write to docs/superpowers/specs/ or docs/superpowers/plans/, or invoke writing-plans until the user has explicitly approved the design AND indicated readiness to proceed. Before that point, no Spec Kit content and no implementation artifacts.
+</HARD-GATE>
+
 ## Anti-Pattern: "This Is Too Simple To Need A Design"
 
 Every project goes through this process. A todo list, a single-function utility, a config change — all of them. "Simple" projects are where unexamined assumptions cause the most wasted work. The design can be short (a few sentences for truly simple projects), but you MUST present it and get approval.
@@ -26,10 +30,16 @@ You MUST create a task for each of these items and complete them in order:
 3. **Ask clarifying questions** — one at a time, understand purpose/constraints/success criteria
 4. **Propose 2-3 approaches** — with trade-offs and your recommendation
 5. **Present design** — in sections scaled to their complexity, get user approval after each section
-6. **Write design doc** — save to `docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md` and commit
-7. **Spec review loop** — dispatch spec-document-reviewer subagent with precisely crafted review context (never your session history); fix issues and re-dispatch until approved (max 3 iterations, then surface to human)
-8. **User reviews written spec** — ask user to review the spec file before proceeding
-9. **Transition to implementation** — invoke writing-plans skill to create implementation plan
+6. **User explicitly approves design** — confirm what/why, boundaries, non-goals, risks are settled. Do NOT proceed until you have clear approval.
+7. **Transition to Spec Kit guided mode** (default) — read `skills/brainstorming/speckit-guide.md` and follow its stage-by-stage instructions. One stage at a time; wait for user confirmation after each.
+
+<ALTERNATIVE-PATH>
+Step 7 above is the DEFAULT. The following alternative applies ONLY when:
+(a) User explicitly requests Superpowers-style plan files or points to writing-plans
+(b) This is plugin/meta-level design work for this toolchain itself (specs go to docs/superpowers/specs/)
+
+Alternative step 7: **Write design doc** to `docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md`, commit, run spec review loop (see spec-document-reviewer-prompt.md, max 3 iterations), user reviews spec, then invoke writing-plans skill.
+</ALTERNATIVE-PATH>
 
 ## Process Flow
 
@@ -42,11 +52,9 @@ digraph brainstorming {
     "Propose 2-3 approaches" [shape=box];
     "Present design sections" [shape=box];
     "User approves design?" [shape=diamond];
-    "Write design doc" [shape=box];
-    "Spec review loop" [shape=box];
-    "Spec review passed?" [shape=diamond];
-    "User reviews spec?" [shape=diamond];
-    "Invoke writing-plans skill" [shape=doublecircle];
+    "Enter Spec Kit guided mode" [shape=doublecircle];
+    "User explicitly requests\nSuperpowers-style plans?" [shape=diamond];
+    "Write design doc + spec review\n+ invoke writing-plans" [shape=box style=dashed];
 
     "Explore project context" -> "Visual questions ahead?";
     "Visual questions ahead?" -> "Offer Visual Companion\n(own message, no other content)" [label="yes"];
@@ -56,17 +64,13 @@ digraph brainstorming {
     "Propose 2-3 approaches" -> "Present design sections";
     "Present design sections" -> "User approves design?";
     "User approves design?" -> "Present design sections" [label="no, revise"];
-    "User approves design?" -> "Write design doc" [label="yes"];
-    "Write design doc" -> "Spec review loop";
-    "Spec review loop" -> "Spec review passed?";
-    "Spec review passed?" -> "Spec review loop" [label="issues found,\nfix and re-dispatch"];
-    "Spec review passed?" -> "User reviews spec?" [label="approved"];
-    "User reviews spec?" -> "Write design doc" [label="changes requested"];
-    "User reviews spec?" -> "Invoke writing-plans skill" [label="approved"];
+    "User approves design?" -> "User explicitly requests\nSuperpowers-style plans?" [label="yes"];
+    "User explicitly requests\nSuperpowers-style plans?" -> "Write design doc + spec review\n+ invoke writing-plans" [label="yes (opt-in\nor meta work)"];
+    "User explicitly requests\nSuperpowers-style plans?" -> "Enter Spec Kit guided mode" [label="no (default)"];
 }
 ```
 
-**The terminal state is invoking writing-plans.** Do NOT invoke dapp-frontend, go-backend, smart-contract-security, or any other implementation skill. The ONLY skill you invoke after brainstorming is writing-plans.
+**The default terminal state is entering Spec Kit guided mode** (see `skills/brainstorming/speckit-guide.md`). Do NOT invoke dapp-frontend, go-backend, smart-contract-security, or any other implementation skill directly from brainstorming. Do NOT automatically invoke writing-plans — it is only used when the user explicitly requests Superpowers-style plan files or for plugin/meta work on this toolchain itself.
 
 ## The Process
 
@@ -109,31 +113,28 @@ digraph brainstorming {
 
 ## After the Design
 
-**Documentation:**
+**Default path — Spec Kit guided mode:**
 
-- Write the validated design (spec) to `docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md`
-  - (User preferences for spec location override this default)
-- Use elements-of-style:writing-clearly-and-concisely skill if available
-- Commit the design document to git
+Once the user approves the design, read and follow `skills/brainstorming/speckit-guide.md`. This guide walks through Spec Kit stages one at a time (Init → Constitution → Specify → Plan → Tasks → Implement). You output operation instructions and copyable prompts; the **user** executes `/speckit.*` slash commands in their IDE. You do NOT run `specify` commands, write `.specify/**` files, or generate Spec Kit artifacts yourself.
 
-**Spec Review Loop:**
-After writing the spec document:
+> After the user approves, say: "Design confirmed. We'll now proceed through Spec Kit stage by stage. Let me know when you're ready and I'll give you the first step."
 
-1. Dispatch spec-document-reviewer subagent (see spec-document-reviewer-prompt.md)
-2. If Issues Found: fix, re-dispatch, repeat until Approved
-3. If loop exceeds 3 iterations, surface to human for guidance
+Wait for the user's confirmation before outputting the first Spec Kit stage prompt.
 
-**User Review Gate:**
-After the spec review loop passes, ask the user to review the written spec before proceeding:
+<ALTERNATIVE-PATH>
+The following alternative applies ONLY when:
+(a) User explicitly requests Superpowers-style plan files or points to writing-plans
+(b) This is plugin/meta-level design work for this toolchain itself
 
-> "Spec written and committed to `<path>`. Please review it and let me know if you want to make any changes before we start writing out the implementation plan."
-
-Wait for the user's response. If they request changes, make them and re-run the spec review loop. Only proceed once the user approves.
-
-**Implementation:**
-
-- Invoke the writing-plans skill to create a detailed implementation plan
-- Do NOT invoke any other skill. writing-plans is the next step.
+If alternative path:
+1. Write the validated design (spec) to `docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md`
+   - (User preferences for spec location override this default)
+   - Use elements-of-style:writing-clearly-and-concisely skill if available
+   - Commit the design document to git
+2. Dispatch spec-document-reviewer subagent (see spec-document-reviewer-prompt.md); fix issues and re-dispatch until approved (max 3 iterations, then surface to human)
+3. Ask user to review the written spec before proceeding
+4. Invoke writing-plans skill to create a detailed implementation plan
+</ALTERNATIVE-PATH>
 
 ## Key Principles
 
