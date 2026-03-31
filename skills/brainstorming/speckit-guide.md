@@ -10,13 +10,23 @@ Stage-by-stage guide for transitioning a brainstorming-approved design into Spec
 - **Do NOT** write business specs to `docs/superpowers/specs/*-design.md` (that path is reserved for plugin/meta work or when the user explicitly requests Superpowers-style files).
 - The **sole source of truth** for the business spec is the Spec Kit artifacts in the target repository.
 
+## Execution in a Separate Chat Window
+
+`/speckit.*` slash commands conflict with the current brainstorming session — if the user types `/speckit.constitution` here, the skill system intercepts it as a message instead of executing the Spec Kit command.
+
+**Before the first stage prompt, tell the user:**
+
+> **Important:** `/speckit.*` commands need to be run in a **separate agent chat window** — not this one. Please open a new chat window in your IDE for executing Spec Kit commands. Keep **this** window open — after each step, come back here to confirm so I can verify and give you the next step.
+
+Remind this once at the start of Stage 0 (or Stage 1 if Init was skipped). You do not need to repeat it for every stage, but every stage prompt should end with "come back here and let me know when done."
+
 ## User Feedback Loop
 
-The user executes `/speckit.*` commands in their IDE (possibly in a different chat context). You have no way to observe this directly. For every stage:
+For every stage:
 
 1. **Output** the stage instructions and copyable prompt
-2. **Explicitly tell** the user to come back and confirm when done (e.g. "Let me know when you've finished this step")
-3. **Wait** for the user to confirm
+2. **Tell the user** to execute in the separate chat window, then come back here to confirm
+3. **Wait** for the user to confirm in this window
 4. **Verify** with your file tools (Glob, Read, ls) that the expected artifacts exist in `.specify/`
 5. **If artifacts found** → announce verification passed, output the next stage
 6. **If artifacts NOT found** → tell the user what's missing, ask them to retry or check for errors
@@ -31,13 +41,17 @@ Do NOT proceed to the next stage without both user confirmation AND artifact ver
 
 **If `.specify/` does NOT exist**, say:
 
-> Your repo doesn't have a `.specify/` directory yet — Spec Kit needs to be initialized. Please run:
+> Your repo doesn't have a `.specify/` directory yet — Spec Kit needs to be initialized.
+>
+> **Please open a separate agent chat window** for running Spec Kit commands (not this one — `/speckit.*` commands won't work here). Keep this window open; after each step, come back here to confirm.
+>
+> In your **terminal** (not a chat window), run:
 >
 > ```
 > specify init .
 > ```
 >
-> The CLI will prompt you to select your AI agent. Let me know once initialization is complete.
+> The CLI will prompt you to select your AI agent. Come back here and let me know once initialization is complete.
 
 **Then wait** for the user to confirm. Once they confirm, **verify again** with file tools that `.specify/` now exists.
 - If `.specify/` exists → announce success, proceed to Stage 1
@@ -46,6 +60,8 @@ Do NOT proceed to the next stage without both user confirmation AND artifact ver
 **If `.specify/` already exists** on the initial check, say:
 
 > Your repo already has Spec Kit initialized (`.specify/` exists). Moving to the Constitution stage.
+>
+> **Please open a separate agent chat window** for running `/speckit.*` commands (not this one — they won't work here). Keep this window open; after each step, come back here to confirm.
 
 Then proceed directly to Stage 1.
 
