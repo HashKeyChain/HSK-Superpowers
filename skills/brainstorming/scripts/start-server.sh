@@ -112,6 +112,12 @@ case "${OSTYPE:-}" in
   msys*|cygwin*|mingw*) OWNER_PID="" ;;
 esac
 
+# Cursor agent shells often spawn ephemeral parents; PPID-based owner is unstable
+# for server.cjs kill(pid,0) lifecycle checks. Match MSYS: no owner watch, idle timeout only.
+if [[ -n "${CURSOR_AGENT:-}" ]]; then
+  OWNER_PID=""
+fi
+
 # Foreground mode for environments that reap detached/background processes.
 if [[ "$FOREGROUND" == "true" ]]; then
   echo "$$" > "$PID_FILE"

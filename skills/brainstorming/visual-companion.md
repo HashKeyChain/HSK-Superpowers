@@ -63,6 +63,13 @@ scripts/start-server.sh --project-dir /path/to/project
 ```
 When calling this via the Bash tool, set `run_in_background: true`. Then read `$SCREEN_DIR/.server-info` on the next turn to get the URL and port.
 
+**Cursor (agent mode):**
+```bash
+# Default mode works.
+scripts/start-server.sh --project-dir /path/to/project
+```
+Cursor agent shells expose `CURSOR_AGENT=1`. In that environment, the startup script disables owner-PID lifecycle monitoring because PPID-based owner tracking is unstable there. The server still cleans itself up via the existing 30-minute idle timeout.
+
 **Codex:**
 ```bash
 # Codex reaps background processes. The script auto-detects CODEX_CI and
@@ -89,6 +96,8 @@ scripts/start-server.sh \
 ```
 
 Use `--url-host` to control what hostname is printed in the returned URL JSON.
+
+If the server logs `fs.watch EMFILE: too many open files`, the HTTP server is still running and the current screen remains reachable, but file-change detection and automatic browser reload are disabled. Reduce other file watchers or raise the open-files limit, then restart `start-server.sh`.
 
 ## The Loop
 

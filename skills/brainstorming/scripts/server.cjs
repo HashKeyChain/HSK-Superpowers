@@ -293,7 +293,22 @@ function startServer() {
       broadcast({ type: 'reload' });
     }, 100));
   });
-  watcher.on('error', (err) => console.error('fs.watch error:', err.message));
+  watcher.on('error', (err) => {
+    const msg = err && err.message ? String(err.message) : '';
+    const code = err && err.code;
+    const isEmfile =
+      code === 'EMFILE' || /EMFILE|too many open files/i.test(msg);
+    if (isEmfile) {
+      console.error(
+        'fs.watch EMFILE: too many open files (process or system open-file limit).\n' +
+          '  The brainstorm HTTP server is still running: existing pages stay reachable.\n' +
+          '  File change detection and automatic browser reload are disabled until this is fixed.\n' +
+          '  Try: reduce other file watchers or workloads, raise the open-files limit (e.g. ulimit -n / launchctl limit), then restart skills/brainstorming/scripts/start-server.sh'
+      );
+      return;
+    }
+    console.error('fs.watch error:', msg);
+  });
 
   function shutdown(reason) {
     console.log(JSON.stringify({ type: 'server-stopped', reason }));
